@@ -1,12 +1,16 @@
-# vanilla-js-wheel-zoom
+# vanilla-ts-wheel-zoom
+
+TypeScript folk of **vanilla-js-wheel-zoom**, with ES Modules and UMD support.
 
 Image resizing using mouse wheel (pinch to zoom) + drag scrollable image (as well as any HTML content)
 
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/worka/vanilla-js-wheel-zoom)
-[![GitHub stars](https://img.shields.io/github/stars/worka/vanilla-js-wheel-zoom)](https://github.com/worka/vanilla-js-wheel-zoom/stargazers)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/AaronNGray/vanilla-ts-wheel-zoom)
+[![GitHub stars](https://img.shields.io/github/stars/AaronNGray/vanilla-ts-wheel-zoom)](https://github.com/AaronNGray/vanilla-ts-wheel-zoom/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/worka/vanilla-js-wheel-zoom)](https://github.com/worka/vanilla-js-wheel-zoom/issues)
+[![GitHub issues](https://img.shields.io/github/issues/AaronNGray/vanilla-ts-wheel-zoom)](https://github.com/AaronNGray/vanilla-ts-wheel-zoom/issues)
 [![GitHub forks](https://img.shields.io/github/forks/worka/vanilla-js-wheel-zoom)](https://github.com/worka/vanilla-js-wheel-zoom/network)
-[![](https://data.jsdelivr.com/v1/package/npm/vanilla-js-wheel-zoom/badge?style=rounded)](https://www.jsdelivr.com/package/npm/vanilla-js-wheel-zoom)
+[![GitHub forks](https://img.shields.io/github/forks/AaronNGray/vanilla-ts-wheel-zoom)](https://github.com/AaronNGray/vanilla-ts-wheel-zoom/network)
+[![](https://data.jsdelivr.com/v1/package/npm/vanilla-ts-wheel-zoom/badge?style=rounded)](https://www.jsdelivr.com/package/npm/vanilla-ts-wheel-zoom)
 
 Advantages:
 * the ability to fit the image into a container of any proportion
@@ -30,13 +34,13 @@ Advantages:
 ### Install
 
 ```cmd
-npm i vanilla-js-wheel-zoom
+npm i vanilla-ts-wheel-zoom
 ```
 
 or
 
 ```cmd
-yarn add vanilla-js-wheel-zoom
+yarn add vanilla-ts-wheel-zoom
 ```
 
 ### Get started
