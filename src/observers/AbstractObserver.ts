@@ -7,12 +7,14 @@ class AbstractObserver {
         this.subscribes = {};
     }
 
+    subscribes:any;  // !!!
+
     /**
      * @param {string} eventType
      * @param {(event: Event) => void} eventHandler
      * @returns {AbstractObserver}
      */
-    on(eventType, eventHandler) {
+    on(eventType:string, eventHandler:Function) {
         if (!(eventType in this.subscribes)) {
             this.subscribes[eventType] = [];
         }
@@ -25,7 +27,7 @@ class AbstractObserver {
     destroy() {
         for (let key in this) {
             if (this.hasOwnProperty(key)) {
-                this[key] = null;
+                delete this[key];
             }
         }
     }
@@ -35,7 +37,7 @@ class AbstractObserver {
      * @param {Event} event
      * @protected
      */
-    _run(eventType, event) {
+    protected run(eventType:string, event:Event) {
         if (this.subscribes[eventType]) {
             for (const eventHandler of this.subscribes[eventType]) {
                 eventHandler(event);

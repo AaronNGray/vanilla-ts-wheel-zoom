@@ -1,0 +1,15 @@
+{
+    "include": [
+        "./src/**/*"
+    ],
+    "compilerOptions": {
+        "strict": true,
+        "esModuleInterop": true,
+        "target": "esnext",
+        "lib": [
+            "dom",
+            "es2022"
+        ],
+        "noEmitOnError": false
+    }
+}

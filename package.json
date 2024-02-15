@@ -1,25 +1,30 @@
 {
-    "name": "vanilla-js-wheel-zoom",
-    "version": "9.0.1",
-    "main": "src/wheel-zoom.js",
+    "name": "vanilla-ts-esm-wheel-zoom",
+    "version": "10.0.0",
+    "type": "module",
+    "main": "dist/wheel-zoom.js",
+    "module": "dist/wheel-zoom.mjs",
+    "types": "dist/wheel-zoom.d.ts",
     "devDependencies": {
-        "@babel/core": "^7.23.9",
-        "@babel/preset-env": "^7.23.9",
-        "@rollup/plugin-babel": "^6.0.4",
+        "@rollup/plugin-typescript": "^11.1.6",
         "prettier": "3.2.4",
-        "rollup": "^4.9.6",
-        "terser": "^5.27.0"
+        "rollup": "^4.11.0",
+        "rollup-plugin-dts-bundle-generator": "^1.4.0",
+        "terser": "^5.27.0",
+        "tslib": "^2.6.2",
+        "typescript": "^5.3.3"
     },
     "scripts": {
-        "build": "yarn rollup && yarn prettier && yarn minify",
-        "watch": "yarn rollup --watch",
-        "rollup": "node ./node_modules/rollup/dist/bin/rollup --config",
-        "prettier": "node ./node_modules/prettier/bin/prettier.cjs --write dist/wheel-zoom.js",
-        "minify": "node ./node_modules/terser/bin/terser dist/wheel-zoom.js -cm --output dist/wheel-zoom.min.js"
+        "rollup": "rollup --config",
+        "tsc": "tsc",
+        "watch": "rollup --watch --config",
+        "prettier": "prettier --write dist/wheel-zoom.js",
+        "minify": "terser dist/wheel-zoom.js -cm --output dist/wheel-zoom.min.js",
+        "release": "npm run rollup && npm run minify"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/worka/vanilla-js-wheel-zoom.git"
+        "url": "git+https://github.com/AaronNGray/vanilla-ts-esm-wheel-zoom.git"
     },
     "keywords": [
         "wheelzoom",
@@ -33,10 +38,13 @@
         "zoom",
         "pinch-to-zoom"
     ],
-    "author": "worka",
+    "author": [
+        "worka",
+        "AaronNGray"
+    ],
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/worka/vanilla-js-wheel-zoom/issues"
+        "url": "https://github.com/AaronNGray/vanilla-ts-esm-wheel-zoom/issues"
     },
-    "homepage": "https://github.com/worka/vanilla-js-wheel-zoom"
+    "homepage": "https://github.com/AaronNGray/vanilla-ts-esm-wheel-zoom"
 }

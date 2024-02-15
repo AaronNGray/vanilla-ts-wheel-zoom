@@ -9,6 +9,7 @@ import {
     isTouch,
     transition,
     transform,
+    Coordinates
 } from './toolkit';
 import {
     calculateAlignPoint,
@@ -16,11 +17,51 @@ import {
     calculateContentShift,
     calculateCorrectPoint,
     calculateViewportCenter,
+    Viewport
 } from './calculator';
-import { wZoomDefaultOptions } from './default-options.js';
+
+import AbstractObserver from './observers/AbstractObserver';
 import DragScrollableObserver, { EVENT_DROP, EVENT_GRAB, EVENT_MOVE } from './observers/DragScrollableObserver';
 import InteractionObserver, { EVENT_CLICK, EVENT_DBLCLICK, EVENT_WHEEL } from './observers/InteractionObserver';
 import PinchToZoomObserver, { EVENT_PINCH_TO_ZOOM } from './observers/PinchToZoomObserver';
+
+import { ZoomDefaultOptions, DefaultOptions } from './default-options.js';
+
+class Content {
+    constructor(selectorOrHTMLElement: string|HTMLImageElement) {
+        if (typeof selectorOrHTMLElement === 'string') {
+            this.$element = <HTMLImageElement> document.querySelector(selectorOrHTMLElement);
+
+            if (!this.$element) {
+                throw `Zoom: Element with selector \`${ selectorOrHTMLElement }\` not found`;
+            }
+        } else if (selectorOrHTMLElement instanceof HTMLElement) {
+            this.$element = selectorOrHTMLElement;
+        } else {
+            throw `Zoom: \`selectorOrHTMLElement\` must be selector or HTMLElement, and not ${ {}.toString.call(selectorOrHTMLElement) }`;
+        }
+    }
+
+    getParent():HTMLElement {
+        return <HTMLElement> this.$element.parentElement;
+    }
+
+    $element:HTMLImageElement;
+    currentLeft:number = 0;
+    currentTop:number = 0;
+    currentWidth:number = 0;
+    currentHeight:number = 0;
+    currentScale:number = 0;
+    originalHeight:number = 0;
+    originalWidth:number = 0;
+    originalScale:number = 0;
+    alignPointX:number = 0;
+    alignPointY:number = 0;
+    correctX:number = 0;
+    correctY:number = 0;
+    minScale:number = 0;
+    maxScale:number = 0;
+};
 
 /**
  * @class WZoom
@@ -28,86 +69,75 @@ import PinchToZoomObserver, { EVENT_PINCH_TO_ZOOM } from './observers/PinchToZoo
  * @param {WZoomOptions} options
  * @constructor
  */
-function WZoom(selectorOrHTMLElement, options = {}) {
-    this._init = this._init.bind(this);
-    this._prepare = this._prepare.bind(this);
-    this._computeScale = this._computeScale.bind(this);
-    this._computePosition = this._computePosition.bind(this);
-    this._transform = this._transform.bind(this);
 
-    /** @type {WZoomContent} */
-    this.content = {};
+export default class WZoom {
+    constructor(selectorOrHTMLElement: string|HTMLImageElement, options: Partial<DefaultOptions> = {}) {
+        this.content = new Content(selectorOrHTMLElement);
 
-    if (typeof selectorOrHTMLElement === 'string') {
-        this.content.$element = document.querySelector(selectorOrHTMLElement);
+        this.init = this.init.bind(this);
+        this.prepare = this.prepare.bind(this);
+        this.computeScale = this.computeScale.bind(this);
+//        this.computePosition = this.computePosition.bind(this);
+        this.transform = this.transform.bind(this);
 
-        if (!this.content.$element) {
-            throw `WZoom: Element with selector \`${ selectorOrHTMLElement }\` not found`;
-        }
-    } else if (selectorOrHTMLElement instanceof HTMLElement) {
-        this.content.$element = selectorOrHTMLElement;
-    } else {
-        throw `WZoom: \`selectorOrHTMLElement\` must be selector or HTMLElement, and not ${ {}.toString.call(selectorOrHTMLElement) }`;
-    }
+        /** @type {WZoomViewport} */
+        this.viewport = new Viewport(this.content.getParent());
 
-    /** @type {WZoomViewport} */
-    this.viewport = {};
-    // for viewport take just the parent
-    this.viewport.$element = this.content.$element.parentElement;
+        /** @type {WZoomOptions} */
+        this.options = optionsConstructor(options, ZoomDefaultOptions);
 
-    /** @type {WZoomOptions} */
-    this.options = optionsConstructor(options, wZoomDefaultOptions);
+        // check if we're using a touch screen
+        this.isTouch = isTouch();
+        this.direction = 1;
+        /** @type {AbstractObserver[]} */
+        this.observers = [];
 
-    // check if we're using a touch screen
-    this.isTouch = isTouch();
-    this.direction = 1;
-    /** @type {AbstractObserver[]} */
-    this.observers = [];
-
-    if (this.options.type === 'image') {
-        // if the `image` has already been loaded
-        if (this.content.$element.complete) {
-            this._init();
+        if (this.options.type === 'image') {
+            // if the `image` has already been loaded
+            if (this.content.$element.complete) {
+                this.init();
+            } else {
+                on(this.content.$element, 'load', this.init, { once: true });
+            }
         } else {
-            on(this.content.$element, 'load', this._init, { once: true });
+            this.init();
         }
-    } else {
-        this._init();
     }
-}
 
-WZoom.prototype = {
-    constructor: WZoom,
-    /**
-     * @private
-     */
-    _init() {
+    content:Content;
+    viewport:Viewport;
+    options:DefaultOptions;
+    observers:AbstractObserver[];
+    direction:number; // !!!
+    isTouch:boolean;
+
+    private init() {
         const { viewport, content, options, observers } = this;
 
-        this._prepare();
-        this._destroyObservers();
+        this.prepare();
+        this.destroyObservers();
 
         if (options.dragScrollable === true) {
             const dragScrollableObserver = new DragScrollableObserver(content.$element);
             observers.push(dragScrollableObserver);
 
             if (typeof options.onGrab === 'function') {
-                dragScrollableObserver.on(EVENT_GRAB, (event) => {
+                dragScrollableObserver.on(EVENT_GRAB, (event:any) => {
                     event.preventDefault();
 
-                    options.onGrab(event, this);
+                    options.onGrab && options.onGrab(event, this); // !!! type
                 });
             }
 
             if (typeof options.onDrop === 'function') {
-                dragScrollableObserver.on(EVENT_DROP, (event) => {
+                dragScrollableObserver.on(EVENT_DROP, (event:any) => {
                     event.preventDefault();
 
-                    options.onDrop(event, this);
+                    options.onDrop && options.onDrop(event, this); // !!! type
                 });
             }
 
-            dragScrollableObserver.on(EVENT_MOVE, (event) => {
+            dragScrollableObserver.on(EVENT_MOVE, (event:any) => {
                 event.preventDefault();
 
                 const { x, y } = event.data;
@@ -139,20 +169,20 @@ WZoom.prototype = {
                 const pinchToZoomObserver = new PinchToZoomObserver(content.$element);
                 observers.push(pinchToZoomObserver);
 
-                pinchToZoomObserver.on(EVENT_PINCH_TO_ZOOM, (event) => {
+                pinchToZoomObserver.on(EVENT_PINCH_TO_ZOOM, (event:any) => {
                     const { clientX, clientY, direction } = event.data;
 
-                    const scale = this._computeScale(direction);
-                    this._computePosition(scale, clientX, clientY);
+                    const scale = this.computeScale(direction);
+                    this.computePosition(scale, clientX, clientY);
                     this._transform();
                 });
             } else {
-                interactionObserver.on(EVENT_WHEEL, (event) => {
+                interactionObserver.on(EVENT_WHEEL, (event:any) => {
                     event.preventDefault();
 
                     const direction = options.reverseWheelDirection ? -event.deltaY : event.deltaY;
-                    const scale = this._computeScale(direction);
-                    this._computePosition(scale, eventClientX(event), eventClientY(event));
+                    const scale = this.computeScale(direction);
+                    this.computePosition(scale, eventClientX(event), eventClientY(event));
                     this._transform();
                 });
             }
@@ -161,33 +191,30 @@ WZoom.prototype = {
         if (options.zoomOnClick || options.zoomOnDblClick) {
             const eventType = options.zoomOnDblClick ? EVENT_DBLCLICK : EVENT_CLICK;
 
-            interactionObserver.on(eventType, (event) => {
+            interactionObserver.on(eventType, (event:any) => {
                 const scale = this.direction === 1 ? content.maxScale : content.minScale;
-                this._computePosition(scale, eventClientX(event), eventClientY(event));
+                this.computePosition(scale, eventClientX(event), eventClientY(event));
                 this._transform();
 
                 this.direction *= -1;
             });
         }
-    },
-    /**
-     * @private
-     */
-    _prepare() {
+    }
+    private _prepare() {
         const { viewport, content, options } = this;
         const { left, top } = getElementPosition(viewport.$element);
 
-        viewport.originalWidth = viewport.$element.offsetWidth;
-        viewport.originalHeight = viewport.$element.offsetHeight;
+        viewport.originalWidth = viewport.$element!.offsetWidth;
+        viewport.originalHeight = viewport.$element!.offsetHeight;
         viewport.originalLeft = left;
         viewport.originalTop = top;
 
         if (options.type === 'image') {
-            content.originalWidth = options.width || content.$element.naturalWidth;
-            content.originalHeight = options.height || content.$element.naturalHeight;
+            content.originalWidth = options.width || content.$element?.naturalWidth;
+            content.originalHeight = options.height || content.$element?.naturalHeight;
         } else {
-            content.originalWidth = options.width || content.$element.offsetWidth;
-            content.originalHeight = options.height || content.$element.offsetHeight;
+            content.originalWidth = options.width || content.$element?.offsetWidth;
+            content.originalHeight = options.height || content.$element?.offsetHeight;
         }
 
         content.maxScale = options.maxScale;
@@ -210,11 +237,9 @@ WZoom.prototype = {
         }
 
         this._transform();
-    },
-    /**
-     * @private
-     */
-    _computeScale(direction) {
+    }
+
+    private computeScale(direction:number) {
         this.direction = direction < 0 ? 1 : -1;
 
         const { minScale, maxScale, currentScale } = this.content;
@@ -232,14 +257,16 @@ WZoom.prototype = {
         }
 
         return scale;
-    },
+    }
+
     /**
      * @param {number} scale
      * @param {number} x
      * @param {number} y
      * @private
      */
-    _computePosition(scale, x, y) {
+
+    private computePosition(scale:number, x:number, y:number) {
         const { viewport, content, options, direction } = this;
 
         const contentNewWidth = content.originalWidth * scale;
@@ -270,12 +297,14 @@ WZoom.prototype = {
         content.currentLeft = contentNewLeft;
         content.currentTop = contentNewTop;
         content.currentScale = scale;
-    },
+    }
+
     /**
      * @param {number} smoothTime
      * @private
      */
-    _transform(smoothTime) {
+
+    private _transform(smoothTime?:number) {
         if (smoothTime === undefined) smoothTime = this.options.smoothTime;
 
         transition(this.content.$element, smoothTime);
@@ -284,37 +313,43 @@ WZoom.prototype = {
         if (typeof this.options.rescale === 'function') {
             this.options.rescale(this);
         }
-    },
+    }
+
     /**
      * todo добавить проверку на то что бы переданные координаты не выходили за пределы возможного
      * @param {number} scale
      * @param {Object} coordinates
      * @private
      */
-    _zoom(scale, coordinates = {}) {
+
+    private zoom(scale:number, coordinates?:Coordinates) {
         // if the coordinates are not passed, then use the coordinates of the center
-        if (coordinates.x === undefined || coordinates.y === undefined) {
+        if (coordinates === undefined) {
             coordinates = calculateViewportCenter(this.viewport);
         }
 
-        this._computePosition(scale, coordinates.x, coordinates.y);
+        this.computePosition(scale, coordinates?.x, coordinates?.y);
         this._transform();
-    },
-    _destroyObservers() {
+    }
+
+    private destroyObservers() {
         for (const observer of this.observers) {
             observer.destroy();
         }
-    },
+    }
+
     prepare() {
         this._prepare();
-    },
+    }
+
     /**
      * todo добавить проверку на то что бы переданный state вообще возможен для данного instance
      * @param {number} top
      * @param {number} left
      * @param {number} scale
      */
-    transform(top, left, scale) {
+
+    transform(top:number, left:number, scale:number) {
         const { content } = this;
 
         content.currentWidth = content.originalWidth * scale;
@@ -324,44 +359,63 @@ WZoom.prototype = {
         content.currentScale = scale;
 
         this._transform();
-    },
+    }
+
     zoomUp() {
-        this._zoom(this._computeScale(-1));
-    },
+        this.zoom(this.computeScale(-1));
+    }
+
     zoomDown() {
-        this._zoom(this._computeScale(1));
-    },
+        this.zoom(this.computeScale(1));
+    }
+
     maxZoomUp() {
-        this._zoom(this.content.maxScale);
-    },
+        this.zoom(this.content.maxScale);
+    }
+
     maxZoomDown() {
-        this._zoom(this.content.minScale);
-    },
-    zoomUpToPoint(coordinates) {
-        this._zoom(this._computeScale(-1), coordinates);
-    },
-    zoomDownToPoint(coordinates) {
-        this._zoom(this._computeScale(1), coordinates);
-    },
-    maxZoomUpToPoint(coordinates) {
-        this._zoom(this.content.maxScale, coordinates);
-    },
+        this.zoom(this.content.minScale);
+    }
+
+    zoomUpToPoint(coordinates:Coordinates) {
+        this.zoom(this.computeScale(-1), coordinates);
+    }
+
+    zoomDownToPoint(coordinates:Coordinates) {
+        this.zoom(this.computeScale(1), coordinates);
+    }
+
+    maxZoomUpToPoint(coordinates:Coordinates) {
+        this.zoom(this.content.maxScale, coordinates);
+    }
+
     destroy() {
         this.content.$element.style.removeProperty('transition');
         this.content.$element.style.removeProperty('transform');
 
         if (this.options.type === 'image') {
-            off(this.content.$element, 'load', this._init);
+            off(this.content.$element, 'load', this.init);
         }
 
-        this._destroyObservers();
+        this.destroyObservers();
 
         for (let key in this) {
             if (this.hasOwnProperty(key)) {
-                this[key] = null;
+                delete this[key];
             }
         }
     }
+
+    /**
+     * Create WZoom instance
+     * @param {string|HTMLElement} selectorOrHTMLElement
+     * @param {WZoomOptions} [options]
+     * @returns {WZoom}
+     */
+
+    static create(selectorOrHTMLElement: string|HTMLImageElement, options: Partial<DefaultOptions> = {}) {
+        return new WZoom(selectorOrHTMLElement, options);
+    };
 };
 
 /**
@@ -369,7 +423,8 @@ WZoom.prototype = {
  * @param {?WZoomOptions} defaultOptions
  * @returns {?WZoomOptions}
  */
-function optionsConstructor(targetOptions, defaultOptions) {
+
+function optionsConstructor(targetOptions: Partial<DefaultOptions>, defaultOptions: Partial<DefaultOptions>):DefaultOptions {
     const options = Object.assign({}, defaultOptions, targetOptions);
 
     if (isTouch()) {
@@ -379,27 +434,15 @@ function optionsConstructor(targetOptions, defaultOptions) {
         const smoothTime = Number(options.smoothTime);
         const smoothTimeDrag = Number(options.smoothTimeDrag);
 
-        options.smoothTime = !isNaN(smoothTime) ? smoothTime : wZoomDefaultOptions.smoothTime;
+        options.smoothTime = !isNaN(smoothTime) ? smoothTime : ZoomDefaultOptions.smoothTime;
         options.smoothTimeDrag = !isNaN(smoothTimeDrag) ? smoothTimeDrag : options.smoothTime;
     }
 
-    return options;
+    return <DefaultOptions>options;
 }
 
 /**
- * Create WZoom instance
- * @param {string|HTMLElement} selectorOrHTMLElement
- * @param {WZoomOptions} [options]
- * @returns {WZoom}
- */
-WZoom.create = function (selectorOrHTMLElement, options = {}) {
-    return new WZoom(selectorOrHTMLElement, options);
-};
-
-export default WZoom;
-
-/**
- * @typedef WZoomContent
+ * @typedef ZoomContent
  * @type {Object}
  * @property {HTMLElement} [$element]
  * @property {number} [originalWidth]

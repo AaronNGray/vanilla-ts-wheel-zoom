@@ -1,13 +1,36 @@
 /** @type {WZoomOptions} */
-export const wZoomDefaultOptions = {
+
+export type DefaultOptions = {
+    type:string;
+    width?:number;
+    height?:number;
+    minScale?:number;
+    maxScale:number;
+    speed:number;
+    zoomOnClick:boolean;
+    zoomOnDblClick:boolean;
+    smoothTime:number;
+    alignContent:string;
+    disableWheelZoom:boolean;
+    reverseWheelDirection:boolean;
+    dragScrollable:boolean;
+    smoothTimeDrag?:number;
+    onGrab?:Function;
+    onMove?:Function;
+    onDrop?:Function;
+    rescale?:Function;
+    prepare?:Function;
+}
+
+export const ZoomDefaultOptions:DefaultOptions = {
     // type content: `image` - only one image, `html` - any HTML content
     type: 'image',
     // for type `image` computed auto (if width set null), for type `html` need set real html content width, else computed auto
-    width: null,
+    width: undefined,
     // for type `image` computed auto (if height set null), for type `html` need set real html content height, else computed auto
-    height: null,
+    height: undefined,
     // minimum allowed proportion of scale (computed auto if null)
-    minScale: null,
+    minScale: undefined,
     // maximum allowed proportion of scale (1 = 100% content size)
     maxScale: 1,
     // content resizing speed
@@ -26,7 +49,7 @@ export const wZoomDefaultOptions = {
     reverseWheelDirection: false,
     // ******************** //
     // drag scrollable content
-    dragScrollable: true,
+    dragScrollable: true
 };
 
 /**

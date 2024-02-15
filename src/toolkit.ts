@@ -1,9 +1,14 @@
+export class Coordinates {
+    x:number = 0;
+    y:number = 0;
+}
+
 /**
  * Get element position (with support old browsers)
  * @param {Element} element
  * @returns {{top: number, left: number}}
  */
-export function getElementPosition(element) {
+export function getElementPosition(element:HTMLElement): {top:number, left:number} {
     const box = element.getBoundingClientRect();
 
     const { body, documentElement } = document;
@@ -24,7 +29,7 @@ export function getElementPosition(element) {
  * Get page scroll left
  * @returns {number}
  */
-export function getPageScrollLeft() {
+export function getPageScrollLeft():number {
     const supportPageOffset = window.pageXOffset !== undefined;
     const isCSS1Compat = ((document.compatMode || '') === 'CSS1Compat');
 
@@ -35,7 +40,7 @@ export function getPageScrollLeft() {
  * Get page scroll top
  * @returns {number}
  */
-export function getPageScrollTop() {
+export function getPageScrollTop():number {
     const supportPageOffset = window.pageYOffset !== undefined;
     const isCSS1Compat = ((document.compatMode || '') === 'CSS1Compat');
 
@@ -44,11 +49,12 @@ export function getPageScrollTop() {
 
 /**
  * @param target
- * @param type
- * @param listener
- * @param options
+ * @param type: string
+ * @param listener: EventListenerOrEventListenerObject
+ * @param options?: boolean | AddEventListenerOptions
  */
-export function on(target, type, listener, options = false) {
+
+export function on(target:HTMLElement|Document, type: string, listener: (event:Event) => void, options: boolean | AddEventListenerOptions = false) {
     target.addEventListener(type, listener, options);
 }
 
@@ -58,7 +64,7 @@ export function on(target, type, listener, options = false) {
  * @param listener
  * @param options
  */
-export function off(target, type, listener, options = false) {
+export function off(target:HTMLElement|Document, type: string, listener: (event:Event) => void, options: boolean | AddEventListenerOptions = false) {
     target.removeEventListener(type, listener, options);
 }
 
@@ -66,35 +72,35 @@ export function off(target, type, listener, options = false) {
  * @returns {boolean}
  */
 export function isTouch() {
-    return 'ontouchstart' in window || navigator.MaxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 /*|| navigator["msMaxTouchPoints"] > 0 */;
 }
 
 /**
  * @param {Event} event
  * @returns {number}
  */
-export function eventClientX(event) {
+export function eventClientX(event:MouseEvent|TouchEvent) {
     return event.type === 'wheel' ||
     event.type === 'pointerup' ||
     event.type === 'pointerdown' ||
     event.type === 'pointermove' ||
     event.type === 'mousedown' ||
     event.type === 'mousemove' ||
-    event.type === 'mouseup' ? event.clientX : event.changedTouches[0].clientX;
+    event.type === 'mouseup' ? (<MouseEvent>event).clientX : (<TouchEvent>event).changedTouches[0].clientX;
 }
 
 /**
  * @param {Event} event
  * @returns {number}
  */
-export function eventClientY(event) {
+export function eventClientY(event:MouseEvent|TouchEvent) {
     return event.type === 'wheel' ||
     event.type === 'pointerup' ||
     event.type === 'pointerdown' ||
     event.type === 'pointermove' ||
     event.type === 'mousedown' ||
     event.type === 'mousemove' ||
-    event.type === 'mouseup' ? event.clientY : event.changedTouches[0].clientY;
+    event.type === 'mouseup' ? (<MouseEvent>event).clientY : (<TouchEvent>event).changedTouches[0].clientY;
 }
 
 /**
@@ -103,7 +109,7 @@ export function eventClientY(event) {
  * @param {number} top
  * @param {number} scale
  */
-export function transform($element, left, top, scale) {
+export function transform($element:HTMLElement, left:number, top:number, scale:number) {
     $element.style.transform = `translate(${ left }px, ${ top }px) scale(${ scale })`;
 }
 
@@ -111,7 +117,7 @@ export function transform($element, left, top, scale) {
  * @param {HTMLElement} $element
  * @param {number} time
  */
-export function transition($element, time) {
+export function transition($element:HTMLElement, time:number) {
     if (time) {
         $element.style.transition = `transform ${ time }s`;
     } else {

@@ -1,12 +1,28 @@
 import { getElementPosition, getPageScrollLeft, getPageScrollTop } from './toolkit';
 
 /**
+ *
  * @param {WZoomViewport} viewport
  * @param {WZoomContent} content
  * @param {string} align
  * @returns {number[]}
  */
-export function calculateAlignPoint(viewport, content, align) {
+export class Viewport {
+    constructor($element:HTMLElement) {
+        this.$element = $element;
+    }
+    $element:HTMLElement;
+    originalTop:number = 0;
+    originalLeft:number = 0;
+    originalHeight:number = 0;
+    originalWidth:number = 0;
+}
+export type Content = {
+    currentHeight:number;
+    currentWidth:number;
+}
+
+export function calculateAlignPoint(viewport:Viewport, content:Content, align:string) {
     let pointX = 0;
     let pointY = 0;
 
@@ -34,7 +50,7 @@ export function calculateAlignPoint(viewport, content, align) {
  * @param {string} align
  * @returns {number[]}
  */
-export function calculateCorrectPoint(viewport, content, align) {
+export function calculateCorrectPoint(viewport:Viewport, content:Content, align:string) {
     let pointX = Math.max(0, (viewport.originalWidth - content.currentWidth) / 2);
     let pointY = Math.max(0, (viewport.originalHeight - content.currentHeight) / 2);
 
@@ -59,7 +75,7 @@ export function calculateCorrectPoint(viewport, content, align) {
 /**
  * @returns {number}
  */
-export function calculateContentShift(axisValue, axisScroll, axisViewportPosition, axisContentPosition, originalViewportSize, contentSizeRatio) {
+export function calculateContentShift(axisValue:number, axisScroll:number, axisViewportPosition:number, axisContentPosition:number, originalViewportSize:number, contentSizeRatio:number):number {
     const viewportShift = axisValue + axisScroll - axisViewportPosition;
     const centerViewportShift = originalViewportSize / 2 - viewportShift;
     const centerContentShift = centerViewportShift + axisContentPosition;
@@ -67,7 +83,7 @@ export function calculateContentShift(axisValue, axisScroll, axisViewportPositio
     return centerContentShift * contentSizeRatio - centerContentShift + axisContentPosition;
 }
 
-export function calculateContentMaxShift(align, originalViewportSize, correctCoordinate, size, shift) {
+export function calculateContentMaxShift(align:string, originalViewportSize:number, correctCoordinate:number, size:number, shift:number):number {
     switch (align) {
         case 'left':
             if (size / 2 - shift < originalViewportSize / 2) {
@@ -93,7 +109,7 @@ export function calculateContentMaxShift(align, originalViewportSize, correctCoo
  * @param {WZoomViewport} viewport
  * @returns {{x: number, y: number}}
  */
-export function calculateViewportCenter(viewport) {
+export function calculateViewportCenter(viewport:Viewport):{x:number, y:number} {
     const viewportPosition = getElementPosition(viewport.$element);
 
     return {

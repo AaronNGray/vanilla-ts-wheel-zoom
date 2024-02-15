@@ -5,21 +5,21 @@ export const EVENT_PINCH_TO_ZOOM = 'pinchtozoom';
 
 const SHIFT_DECIDE_THAT_MOVE_STARTED = 5;
 
-class PinchToZoomObserver extends AbstractObserver {
+export default class PinchToZoomObserver extends AbstractObserver {
     /**
      * @param {HTMLElement} target
      * @constructor
      */
-    constructor(target) {
+    constructor(target:HTMLElement) {
         super();
 
         this.target = target;
 
-        this.fingersHypot = null;
+        this.fingersHypot = 0;
         this.zoomPinchWasDetected = false;
 
-        this._touchMoveHandler = this._touchMoveHandler.bind(this);
-        this._touchEndHandler = this._touchEndHandler.bind(this);
+        this._touchMoveHandler = <(event:any) => void> this.touchMoveHandler.bind(this);
+        this._touchEndHandler = this.touchEndHandler.bind(this);
 
         on(this.target, 'touchmove', this._touchMoveHandler);
         on(this.target, 'touchend', this._touchEndHandler);
@@ -32,11 +32,17 @@ class PinchToZoomObserver extends AbstractObserver {
         super.destroy();
     }
 
+    target:HTMLElement;
+    fingersHypot:number;
+    zoomPinchWasDetected:boolean;
+    _touchMoveHandler:(event:Event) => void;
+    _touchEndHandler:(event:Event) => void;
+
     /**
      * @param {TouchEvent|PointerEvent} event
      * @private
      */
-    _touchMoveHandler(event) {
+    private touchMoveHandler(event:TouchEvent & {data:{clientX:number, clientY:number, direction:number}}) {
         // detect two fingers
         if (event.targetTouches.length === 2) {
             const pageX1 = event.targetTouches[0].clientX;
@@ -63,7 +69,7 @@ class PinchToZoomObserver extends AbstractObserver {
 
                     event.data = { ...event.data || {}, clientX, clientY, direction };
 
-                    this._run(EVENT_PINCH_TO_ZOOM, event);
+                    this.run(EVENT_PINCH_TO_ZOOM, event);
                 }
 
                 this.fingersHypot = fingersHypotNew;
@@ -75,12 +81,10 @@ class PinchToZoomObserver extends AbstractObserver {
     /**
      * @private
      */
-    _touchEndHandler() {
+    private touchEndHandler() {
         if (this.zoomPinchWasDetected) {
-            this.fingersHypot = null;
+            this.fingersHypot = 0;
             this.zoomPinchWasDetected = false;
         }
     }
 }
-
-export default PinchToZoomObserver;

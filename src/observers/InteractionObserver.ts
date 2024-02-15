@@ -1,22 +1,22 @@
-import { eventClientX, eventClientY, isTouch, off, on } from '../toolkit';
+import { eventClientX, eventClientY, isTouch, off, on, Coordinates } from '../toolkit';
 import AbstractObserver from './AbstractObserver';
 
 export const EVENT_CLICK = 'click';
 export const EVENT_DBLCLICK = 'dblclick';
 export const EVENT_WHEEL = 'wheel';
 
-class InteractionObserver extends AbstractObserver {
+export default class InteractionObserver extends AbstractObserver {
     /**
      * @param {HTMLElement} target
      * @constructor
      */
-    constructor(target) {
+    constructor(target:HTMLElement) {
         super();
 
         this.target = target;
 
-        this.coordsOnDown = null;
-        this.pressingTimeout = null;
+        this.coordsOnDown = undefined;
+        this.pressingTimeout = -1;
         this.firstClick = true;
 
         // check if we're using a touch screen
@@ -28,9 +28,9 @@ class InteractionObserver extends AbstractObserver {
         // if using touch screen tells the browser that the default action will not be undone
         this.events.options = this.isTouch ? { passive: true } : false;
 
-        this._downHandler = this._downHandler.bind(this);
-        this._upHandler = this._upHandler.bind(this);
-        this._wheelHandler = this._wheelHandler.bind(this);
+        this._downHandler = <(event:Event) => void> this.downHandler.bind(this);
+        this._upHandler = <(event:Event) => void> this.upHandler.bind(this);
+        this._wheelHandler = <(event:Event) => void> this.wheelHandler.bind(this);
 
         on(this.target, this.events.down, this._downHandler, this.events.options);
         on(this.target, this.events.up, this._upHandler, this.events.options);
@@ -45,14 +45,25 @@ class InteractionObserver extends AbstractObserver {
         super.destroy();
     }
 
+    target:HTMLElement;
+    coordsOnDown?:Coordinates;
+    pressingTimeout:number;
+    firstClick:boolean;
+    isTouch:boolean;
+    events:any;
+
+    _downHandler:(event: Event) => void;
+    _upHandler:(event: Event) => void;
+    _wheelHandler:(event: Event) => void;
+
     /**
      * @param {TouchEvent|MouseEvent|PointerEvent} event
      * @private
      */
-    _downHandler(event) {
-        this.coordsOnDown = null;
+    private downHandler(event:TouchEvent|MouseEvent|PointerEvent) {
+        this.coordsOnDown = undefined;
 
-        if ((this.isTouch && event.touches.length === 1) || event.buttons === 1) {
+        if ((this.isTouch && (<TouchEvent>event).touches.length === 1) || (<MouseEvent>event).buttons === 1) {
             this.coordsOnDown = { x: eventClientX(event), y: eventClientY(event) };
         }
 
@@ -63,26 +74,26 @@ class InteractionObserver extends AbstractObserver {
      * @param {TouchEvent|MouseEvent|PointerEvent} event
      * @private
      */
-    _upHandler(event) {
+    private upHandler(event:TouchEvent|MouseEvent|PointerEvent) {
         const delay = 200;
         const setTimeoutInner = this.subscribes[EVENT_DBLCLICK]
             ? setTimeout
-            : (cb, delay) => cb();
+            : (cb:Function, delay:number) => cb();
 
         if (this.firstClick) {
             this.firstClick = false;
 
             this.pressingTimeout = setTimeoutInner(() => {
-                if (!this._isDetectedShift(event)) {
-                    this._run(EVENT_CLICK, event);
+                if (!this.isDetectedShift(event)) {
+                    this.run(EVENT_CLICK, event);
                 }
 
                 this.firstClick = true;
             }, delay);
         } else {
             this.pressingTimeout = setTimeoutInner(() => {
-                if (!this._isDetectedShift(event)) {
-                    this._run(EVENT_DBLCLICK, event);
+                if (!this.isDetectedShift(event)) {
+                    this.run(EVENT_DBLCLICK, event);
                 }
 
                 this.firstClick = true;
@@ -94,8 +105,8 @@ class InteractionObserver extends AbstractObserver {
      * @param {WheelEvent} event
      * @private
      */
-    _wheelHandler(event) {
-        this._run(EVENT_WHEEL, event);
+    wheelHandler(event:WheelEvent) {
+        this.run(EVENT_WHEEL, event);
     }
 
     /**
@@ -103,11 +114,9 @@ class InteractionObserver extends AbstractObserver {
      * @return {boolean}
      * @private
      */
-    _isDetectedShift(event) {
+    private isDetectedShift(event:TouchEvent|MouseEvent|PointerEvent) {
         return !(this.coordsOnDown &&
-            this.coordsOnDown.x === eventClientX(event) &&
-            this.coordsOnDown.y === eventClientY(event));
+            this.coordsOnDown?.x === eventClientX(event) &&
+            this.coordsOnDown?.y === eventClientY(event));
     }
 }
-
-export default InteractionObserver;
