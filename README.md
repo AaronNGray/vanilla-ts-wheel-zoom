@@ -6,11 +6,8 @@ Image resizing using mouse wheel (pinch to zoom) + drag scrollable image (as wel
 
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/AaronNGray/vanilla-ts-wheel-zoom)
 [![GitHub stars](https://img.shields.io/github/stars/AaronNGray/vanilla-ts-wheel-zoom)](https://github.com/AaronNGray/vanilla-ts-wheel-zoom/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/worka/vanilla-js-wheel-zoom)](https://github.com/worka/vanilla-js-wheel-zoom/issues)
 [![GitHub issues](https://img.shields.io/github/issues/AaronNGray/vanilla-ts-wheel-zoom)](https://github.com/AaronNGray/vanilla-ts-wheel-zoom/issues)
-[![GitHub forks](https://img.shields.io/github/forks/worka/vanilla-js-wheel-zoom)](https://github.com/worka/vanilla-js-wheel-zoom/network)
 [![GitHub forks](https://img.shields.io/github/forks/AaronNGray/vanilla-ts-wheel-zoom)](https://github.com/AaronNGray/vanilla-ts-wheel-zoom/network)
-[![](https://data.jsdelivr.com/v1/package/npm/vanilla-ts-wheel-zoom/badge?style=rounded)](https://www.jsdelivr.com/package/npm/vanilla-ts-wheel-zoom)
 
 Advantages:
 * the ability to fit the image into a container of any proportion
@@ -23,13 +20,7 @@ Advantages:
 
 > HTML content can be of any structure, but the topmost child element in the “viewport” must be one. In the example with "badge" below, it will be more clear what is meant.
 
-🖐 If you find my plugin helpful, please <a href="https://paypal.me/bworka">donate me</a> 🤝
-
-<a href="https://worka.github.io/vanilla-js-wheel-zoom/examples/image.html">Demo (only one image)</a>
-
-<a href="https://worka.github.io/vanilla-js-wheel-zoom/examples/images.html">Demo (multi images)</a>
-
-<a href="https://worka.github.io/vanilla-js-wheel-zoom/examples/html.html">Demo (html)</a>
+See https://github.com/worka/vanilla-js-wheel-zoom for examples.
 
 ### Install
 
@@ -155,10 +146,6 @@ There are no such, but [you can get](https://github.com/worka/vanilla-js-wheel-z
 
 See <a href="https://worka.github.io/vanilla-js-wheel-zoom/examples/images.html">demo</a>
 
-#### Playground...
-
-<a href="https://codesandbox.io/s/worka-vanilla-js-wheel-zoom-forked-sbndwy">Have some fun 🤸‍♂️</a>
-
 ### Options
 
 | name                  | type        | default     | note                                                                                                                                                                                                                                                                                                  |
@@ -203,3 +190,4 @@ See <a href="https://worka.github.io/vanilla-js-wheel-zoom/examples/images.html"
 ### License
 
 [MIT](https://choosealicense.com/licenses/mit/)
+
